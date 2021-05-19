@@ -55,7 +55,7 @@ func GetPersonDetail(username string) (*PersonDetail, error) {
 		return nil, errors.New("invalid username")
 	}
 
-	// 从 http 接口获取信息
+	// 从 redis 接口获取信息
 	detail, err := getPersonDetailRedis(username)
 	if err != nil {
 		return nil, err
