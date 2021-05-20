@@ -124,7 +124,10 @@ func Test_getPersonDetailRedis(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	// 1. 生成符合 redis.Conn 接口的 mockConn
 	mockConn := NewMockConn(ctrl)
+
+	// 2. 给接口打桩序列
 	gomock.InOrder(
 		mockConn.EXPECT().Do("GET", gomock.Any()).Return("", errors.New("redis.Do err")),
 		mockConn.EXPECT().Close().Return(nil),
@@ -134,7 +137,7 @@ func Test_getPersonDetailRedis(t *testing.T) {
 		mockConn.EXPECT().Close().Return(nil),
 	)
 
-	// redis.Dail 函数打桩
+	// 3. 给 redis.Dail 函数打桩
 	outputs := []gomonkey.OutputCell{
 		{
 			Values: gomonkey.Params{mockConn, nil},
@@ -142,10 +145,13 @@ func Test_getPersonDetailRedis(t *testing.T) {
 		},
 	}
 	patches := gomonkey.ApplyFuncSeq(redis.Dial, outputs)
+	// 执行完毕之后释放桩序列
 	defer patches.Reset()
 
+	// 4. 断言
 	for _, tt := range tests {
 		actual, err := getPersonDetailRedis(tt.name)
+		// 注意，equal 函数能够对结构体进行 deap diff
 		assert.Equal(t, tt.want, actual)
 		assert.Equal(t, tt.wantErr, err != nil)
 	}
